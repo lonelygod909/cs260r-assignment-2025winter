@@ -21,7 +21,7 @@ from core.envs import make_envs
 from core.ppo_trainer import PPOTrainer, PPOConfig
 from core.utils import verify_log_dir, pretty_print, Timer, step_envs
 
-gym.logger.set_level(40)
+gym.logger.min_level = 40
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -131,6 +131,7 @@ if __name__ == '__main__':
                             trainer.compute_action(trainer.rollouts.observations[index])
 
                     assert values.shape == (num_envs, 1)
+                  
                     assert action_log_prob.shape == (num_envs, 1)
 
                     # `actions` is a torch tensor, so we need to turn it into numpy array.

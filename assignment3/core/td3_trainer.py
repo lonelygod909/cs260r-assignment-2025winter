@@ -160,10 +160,9 @@ class TD3Trainer:
             # TODO: Generate noise and clipped the noise.
             # Hint: Sample a noise from Normal distribution with the STD=self.policy_noise.
             # The shape should be the same as the action.
-            # noise = (
-            #         ???
-            # ).clamp(-self.noise_clip, self.noise_clip)
-            pass
+            noise = (torch.normal(mean=0, std=self.policy_noise, size=action.shape, device=action.device)
+                     ).clamp(-self.noise_clip, self.noise_clip)
+
 
             # TODO: Select next action according to the delayed-updated policy (self.actor_target) and add noise.
             # Hint: The next action should be clipped by the +- self.max_action.
@@ -171,20 +170,21 @@ class TD3Trainer:
             # next_action = (
             #         ???
             # ).clamp(-self.max_action, self.max_action)
-            pass
+            next_action = (self.actor_target(next_state).reshape(action.shape) + noise
+                           ).clamp(-self.max_action, self.max_action)
 
             # TODO: Compute the target Q value (the objective of both critics).
             # Hint: Call the delayed-updated critic (self.critic_target) first, then compute the critic objective.
-            target_Q = None
-            pass
+            target_Q1, target_Q2 = self.critic_target(next_state, next_action)
+            target_Q = reward + self.discount * not_done * torch.min(target_Q1, target_Q2)
+
 
         # Get current Q estimates
         current_Q1, current_Q2 = self.critic(state, action)
 
         # TODO: Compute critic loss.
         # Hint: Compute the MSE for both critics and sum them up.
-        critic_loss = None
-        pass
+        critic_loss = torch.mean((current_Q1 - target_Q).pow(2)) + torch.mean((current_Q2 - target_Q).pow(2))
 
         # Optimize the critic
         self.critic_optimizer.zero_grad()
@@ -199,8 +199,8 @@ class TD3Trainer:
             # TODO: Compute the actor loss
             # Hint: The actor loss is the negative Q value of the critic, where the action is provided by the current
             # actor.
-            actor_loss = None
-            pass
+            actor_loss = -self.critic.Q1(state, self.actor(state)).mean()
+
 
             # Optimize the actor
             self.actor_optimizer.zero_grad()

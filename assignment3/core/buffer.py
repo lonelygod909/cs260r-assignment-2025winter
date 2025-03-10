@@ -103,8 +103,10 @@ class PPORolloutStorage(BaseRolloutStorage):
                 #  * Again, you should be very careful to handle the `next mask`.
                 #  * The final `gae` is the sum of TD error and future gae.
                 #  * After getting gae=advantage_t, we can fill the self.returns[t] by `advantage_t + value_t`.
-                pass
-                # self.returns[step] = ???
-                pass
+                value_t = self.value_preds[step]
+                td = self.rewards[step] + gamma * next_value * self.masks[step + 1] - value_t
+                gae = gae * gamma * self.gae_lambda * self.masks[step + 1] + td
+                next_value = value_t
+                self.returns[step] =gae + value_t
         else:
             raise NotImplementedError()
